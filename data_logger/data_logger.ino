@@ -6,41 +6,35 @@
 
 // MICRO SD
 File myFile;  // Define myfile variable
+String fname = "test10.txt";
 const int chipSelect = 10;
 
 // Timer
-unsigned int count = 0;
-unsigned int sec = 0;
-bool check = false;
+const uint8_t int_period = 10; // Each 10ms
+uint8_t count = 0;
 bool av_read_acc = false;
-int count_old = 0;
 
 // ACC
 const int MPU = 0x68;
 float AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
 
 // Data array
-const int num_cols = 7;
-int last_idx = 0;
+const uint8_t num_cols = 7;
+uint8_t last_idx = 0;
+String aux_ = "";
 
-const int acc_data_size = 10;
-String acc_data[acc_data_size] = {};  // To save 280ms of data
+const uint8_t acc_data_size = num_cols * 3;
+float acc_data[acc_data_size] = {};  // To save 280ms of data
 
-float aux_data[num_cols] = {0, 0, 0, 0, 0, 0, 0};
+const uint8_t max_j = num_cols - 1;
+const uint8_t max_i = acc_data_size - num_cols;
 
 ISR(TIMER0_COMPB_vect) {
   OCR0B += 156;  // Advance The COMPA Register
-  // Handle The Timer Interrupt
-  //...
   count += 1;
 
-  if (count % 5 == 0){ // Each 100ms
+  if (count % 10 == 0) {  // Each 50ms
     av_read_acc = true;
-  }
-
-  if (count % 100 == 0) { // Each 1 second
-    check = true;
-    sec += 1;
   }
 }
 
@@ -71,46 +65,30 @@ void loop() {
   if (av_read_acc) {
     av_read_acc = false;
     read_acc();
-    last_idx += 1;
-  }
-
-  if (check) {
-    //Serial.println(sec);
-    check = false;
+    last_idx += 7;
   }
 
   if (last_idx == acc_data_size) {
-    //int count_init = count;
+    int count_init = count;
     write_sd();
     last_idx = 0;
-    //Serial.println("time: " + String(count - count_init));
+    count_init = count - count_init;
+    if (count_init >= 4) {
+      Serial.println("time: " + String(count_init));
+    }
   }
 }
 
 void read_acc() {
-  aux_data[0] = count;
-  aux_data[1] = random(1, 10);
-  aux_data[2] = random(1, 10);
-  aux_data[3] = random(1, 10);
-  aux_data[4] = random(1, 10);
-  aux_data[5] = random(1, 10);
+  acc_data[last_idx + 0] = count * int_period;
+  count = 0;
 
-  String aux_ = "";
-  for (int i = 0; i < num_cols; i++){
-    aux_ += String(aux_data[i], 0) + ",";
-  }
-  acc_data[last_idx] = aux_;
-  aux_ = "";
-  /*
-  acc_data[last_idx + 0] = count;
-  acc_data[last_idx + 1] = random(1, 10);
-  acc_data[last_idx + 2] = random(1, 10);
-  acc_data[last_idx + 3] = random(1, 10);
-  acc_data[last_idx + 4] = random(1, 10);
-  acc_data[last_idx + 5] = random(1, 10);
-  acc_data[last_idx + 6] = random(1, 10);
-  acc_data[last_idx + 0]
-  */
+  acc_data[last_idx + 1] = random(1, 100);
+  acc_data[last_idx + 2] = random(1, 100);
+  acc_data[last_idx + 3] = random(1, 100);
+  acc_data[last_idx + 4] = random(1, 100);
+  acc_data[last_idx + 5] = random(1, 100);
+  acc_data[last_idx + 6] = random(1, 100);
 }
 
 void write_sd() {
@@ -118,14 +96,16 @@ void write_sd() {
 
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
-  myFile = SD.open("test.txt", FILE_WRITE);
+  myFile = SD.open(fname, FILE_WRITE);
 
   // if the file opened okay, write to it:
   if (myFile) {
-    Serial.println(acc_data[0]);
-    for (int i = 0; i < acc_data_size; i++) {
-      myFile.print(acc_data[i]);
-      myFile.println("");
+    for (uint8_t i = 0; i < max_i; i += num_cols) {
+      for (uint8_t j = 0; j < num_cols; j++) {
+        aux_ += String(acc_data[i + j], 2) + ",";
+      }
+      myFile.println(aux_);
+      aux_ = "";
     }
 
     // close the file:
