@@ -69,13 +69,13 @@ void loop() {
   }
 
   if (last_idx == acc_data_size) {
-    int count_init = count;
+    //int count_init = count;
     write_sd();
     last_idx = 0;
-    count_init = count - count_init;
-    if (count_init >= 4) {
-      Serial.println("time: " + String(count_init));
-    }
+    //count_init = count - count_init;
+    //if (count_init >= 4) {
+    //  Serial.println("time: " + String(count_init));
+    //}
   }
 }
 
