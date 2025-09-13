@@ -1,22 +1,31 @@
-// Interrupt configured for 10ms, using a unsigned int count I can count around until 54 minutes.
+// Interrupt configured for 10ms.
+
+// Devices
+// Arduino Uno
+// Acc - MPU-6050
+// Micro SD
+
+// Micro SD module
 #include <SD.h>
 #include <SPI.h>
+
+// Acc module
+#include <Adafruit_MPU6050.h>
 #include <Wire.h>
 
+// Timer
+const uint8_t interrupt_ms = 10;               // Each 10ms
+const uint8_t sample_ms = 100 / interrupt_ms;  // Define sample time
+volatile uint8_t count = 0;
 
 // MICRO SD
 File myFile;  // Define myfile variable
-String fname = "testvai.txt";
+String fname = "testacc.txt";
 const int chipSelect = 10;
 
-// Timer
-const uint8_t int_period = 5; // Each 10ms
-const uint8_t sample_time_ms = 100/int_period; // Define sample time
-volatile uint8_t count = 0;
-
 // ACC
-const int MPU = 0x68;
-float AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
+sensors_event_t a, g, temp;
+Adafruit_MPU6050 mpu;
 
 // Data array
 const uint8_t num_cols = 7;
@@ -37,8 +46,8 @@ ISR(TIMER0_COMPA_vect) {
 void setup() {
   delay(5000);
 
-  Serial.begin(9600);
-  // MICRO SD
+  Serial.begin(115200);
+  // Init micro SD module
   pinMode(chipSelect, OUTPUT);
   Serial.print("Initializing SD card...");
 
@@ -48,17 +57,28 @@ void setup() {
   }
   Serial.println("initialization done.");
 
-  // TIMER
+  // Init acc module
+  if (!mpu.begin()) {
+    Serial.println("Failed to find MPU6050 chip");
+    while (1) {
+      delay(10);
+    }
+  }
+  mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
+  mpu.setGyroRange(MPU6050_RANGE_250_DEG);
+  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+
+  // Configure TIMER interrupt
   TCCR0A = 0;           // Init Timer0A
   TCCR0B = 0;           // Init Timer0B
   TCCR0B |= B00000101;  // Prescaler = 1024
-  OCR0A = 156;        // Timer Compare0A Register
+  OCR0A = 156;          // Timer Compare0A Register
   TIMSK0 |= B00000010;  // Enable Timer COMPA Interrupt
 }
 
 void loop() {
   // Read acc
-  if (count >= sample_time_ms) {
+  if (count >= sample_ms) {
     //av_read_acc = false;
     read_acc();
     last_idx += num_cols;
@@ -71,15 +91,23 @@ void loop() {
 }
 
 void read_acc() {
-  acc_data[last_idx + 0] = count * int_period;
+  // Read accelerometer data from MPU-6050 module
+
+  // ACC - m/s^2.
+  // Gyro - rad/s.
+  // Temperature - Celsius.
+  mpu.getEvent(&a, &g, &temp);
+  acc_data[last_idx + 0] = count * interrupt_ms;
   count = 0;
 
-  acc_data[last_idx + 1] = random(1, 100);
-  acc_data[last_idx + 2] = random(1, 100);
-  acc_data[last_idx + 3] = random(1, 100);
-  acc_data[last_idx + 4] = random(1, 100);
-  acc_data[last_idx + 5] = random(1, 100);
-  acc_data[last_idx + 6] = random(1, 100);
+  acc_data[last_idx + 1] = a.acceleration.x;
+  acc_data[last_idx + 2] = a.acceleration.y;
+  acc_data[last_idx + 3] = a.acceleration.z;
+  acc_data[last_idx + 4] = g.gyro.x;
+  acc_data[last_idx + 5] = g.gyro.y;
+  acc_data[last_idx + 6] = g.gyro.z;
+
+  // Get temperature temp.temperature
 }
 
 void write_sd() {
