@@ -1,5 +1,7 @@
 env_*
 
+uv_commands.txt
+
 model/data/*
 model/uv.lock
 model/test*
