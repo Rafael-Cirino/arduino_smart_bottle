@@ -20,7 +20,7 @@ volatile uint8_t count = 0;
 
 // MICRO SD
 File myFile;  // Define myfile variable
-String fname = "testacc.txt";
+String fname = "testcol8.txt";
 const int chipSelect = 10;
 
 // ACC
@@ -28,12 +28,12 @@ sensors_event_t a, g, temp;
 Adafruit_MPU6050 mpu;
 
 // Data array
-const uint8_t num_cols = 7;
+const uint8_t num_cols = 8;
 uint8_t last_idx = 0;
-String aux_ = "";
+String write_aux = "";
 
 const uint8_t acc_data_size = num_cols * 4;
-float acc_data[acc_data_size] = {};  // To save 280ms of data
+int acc_data[acc_data_size] = {};  // To save 280ms of data
 
 const uint8_t max_j = num_cols - 1;
 const uint8_t max_i = acc_data_size - num_cols;
@@ -44,6 +44,7 @@ ISR(TIMER0_COMPA_vect) {
 }
 
 void setup() {
+  // Wait 5sec before load start system
   delay(5000);
 
   Serial.begin(115200);
@@ -100,18 +101,19 @@ void read_acc() {
   acc_data[last_idx + 0] = count * interrupt_ms;
   count = 0;
 
-  acc_data[last_idx + 1] = a.acceleration.x;
-  acc_data[last_idx + 2] = a.acceleration.y;
-  acc_data[last_idx + 3] = a.acceleration.z;
-  acc_data[last_idx + 4] = g.gyro.x;
-  acc_data[last_idx + 5] = g.gyro.y;
-  acc_data[last_idx + 6] = g.gyro.z;
+  acc_data[last_idx + 1] = a.acceleration.x * 100;
+  acc_data[last_idx + 2] = a.acceleration.y * 100;
+  acc_data[last_idx + 3] = a.acceleration.z * 100;
+  acc_data[last_idx + 4] = g.gyro.x * 100;
+  acc_data[last_idx + 5] = g.gyro.y * 100;
+  acc_data[last_idx + 6] = g.gyro.z * 100;
+  acc_data[last_idx + 7] = 0;
 
   // Get temperature temp.temperature
 }
 
 void write_sd() {
-  // This function takes on average 20ms to write data
+  // This function takes on average 30ms to write data
 
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
@@ -121,10 +123,10 @@ void write_sd() {
   if (myFile) {
     for (uint8_t i = 0; i <= max_i; i += num_cols) {
       for (uint8_t j = 0; j < num_cols; j++) {
-        aux_ += String(acc_data[i + j], 2) + ",";
+        write_aux += String(acc_data[i + j]) + ",";
       }
-      myFile.println(aux_);
-      aux_ = "";
+      myFile.println(write_aux);
+      write_aux = "";
     }
 
     // close the file:

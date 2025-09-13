@@ -12,6 +12,7 @@ def read_txt(file):
             "gyro_x",
             "gyro_y",
             "gyro_z",
+            "drink"
         ],
         has_header=False,
     )
@@ -26,7 +27,7 @@ def compute_acc_norm(df):
 
 def prepare_raw_data(PREPARED_PATH: Path, RAW_PATH: Path):
     PREPARED_PATH.mkdir(exist_ok=True, parents=True)
-    for file in RAW_PATH.glob("*ACC*"):
+    for file in RAW_PATH.glob("*COL8*"):
         df = read_txt(file)
         df = df.with_columns(
             pl.col("raw_t_ms").cum_sum().alias("t_ms"),
@@ -35,5 +36,5 @@ def prepare_raw_data(PREPARED_PATH: Path, RAW_PATH: Path):
 
         df = compute_acc_norm(df)
 
-        df = df.select([pl.col('^.*t_ms$'), pl.col(r"^(acc|gyro)_.*$")])
+        df = df.select([pl.col('^.*t_ms$'), pl.col(r"^(acc|gyro)_.*$"), pl.col("drink")])
         df.write_parquet(PREPARED_PATH / (file.stem.lower() + ".parquet"))
