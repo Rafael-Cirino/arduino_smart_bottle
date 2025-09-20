@@ -1,7 +1,10 @@
 import polars as pl
 from pathlib import Path
 
-def read_txt(file):
+RAW_PATH = Path("data/raw")
+PREPARED_PATH = Path("data/prepared")
+
+def read_txt(file: Path | str):
     df = pl.read_csv(
         file,
         new_columns=[
@@ -25,9 +28,9 @@ def compute_acc_norm(df):
     return df.with_columns(pl.sum_horizontal(pl.col(r"^acc_.*$").pow(2)).sqrt().alias("acc_norm"))
 
 
-def prepare_raw_data(PREPARED_PATH: Path, RAW_PATH: Path):
+def prepare_raw_data():
     PREPARED_PATH.mkdir(exist_ok=True, parents=True)
-    for file in RAW_PATH.glob("*COL8*"):
+    for file in RAW_PATH.glob("*"):
         df = read_txt(file)
         df = df.with_columns(
             pl.col("raw_t_ms").cum_sum().alias("t_ms"),
@@ -38,3 +41,6 @@ def prepare_raw_data(PREPARED_PATH: Path, RAW_PATH: Path):
 
         df = df.select([pl.col('^.*t_ms$'), pl.col(r"^(acc|gyro)_.*$"), pl.col("drink")])
         df.write_parquet(PREPARED_PATH / (file.stem.lower() + ".parquet"))
+
+if __name__ == "__main__":
+    prepare_raw_data()
