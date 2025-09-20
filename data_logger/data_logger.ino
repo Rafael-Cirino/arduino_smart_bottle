@@ -20,7 +20,7 @@ volatile uint8_t count = 0;
 
 // MICRO SD
 File myFile;  // Define myfile variable
-String fname = "testcol8.txt";
+String fname = "trc_1.txt";
 const int chipSelect = 10;
 
 // ACC
@@ -45,7 +45,7 @@ ISR(TIMER0_COMPA_vect) {
 
 void setup() {
   // Wait 5sec before load start system
-  delay(5000);
+  delay(10000);
 
   Serial.begin(115200);
   // Init micro SD module
