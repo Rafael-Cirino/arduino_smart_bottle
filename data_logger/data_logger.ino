@@ -13,6 +13,8 @@
 #include <Adafruit_MPU6050.h>
 #include <Wire.h>
 
+#define sip_button 7
+
 // Timer
 const uint8_t interrupt_ms = 10;               // Each 10ms
 const uint8_t sample_ms = 100 / interrupt_ms;  // Define sample time
@@ -20,7 +22,7 @@ volatile uint8_t count = 0;
 
 // MICRO SD
 File myFile;  // Define myfile variable
-String fname = "trc_1.txt";
+String fname = "g_ws0.txt";
 const int chipSelect = 10;
 
 // ACC
@@ -44,8 +46,10 @@ ISR(TIMER0_COMPA_vect) {
 }
 
 void setup() {
-  // Wait 5sec before load start system
+  // Wait 10sec before load start system
   delay(10000);
+
+  pinMode(sip_button, INPUT_PULLUP);
 
   Serial.begin(115200);
   // Init micro SD module
@@ -107,7 +111,7 @@ void read_acc() {
   acc_data[last_idx + 4] = g.gyro.x * 100;
   acc_data[last_idx + 5] = g.gyro.y * 100;
   acc_data[last_idx + 6] = g.gyro.z * 100;
-  acc_data[last_idx + 7] = 0;
+  acc_data[last_idx + 7] = !digitalRead(sip_button);
 
   // Get temperature temp.temperature
 }
