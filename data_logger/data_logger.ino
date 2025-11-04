@@ -22,7 +22,7 @@ volatile uint8_t count = 0;
 
 // MICRO SD
 File myFile;  // Define myfile variable
-String fname = "g_ws0.txt";
+String fname = "g_v03.txt";
 const int chipSelect = 10;
 
 // ACC
@@ -46,8 +46,8 @@ ISR(TIMER0_COMPA_vect) {
 }
 
 void setup() {
-  // Wait 10sec before load start system
-  delay(10000);
+  // Wait 15sec before load start system
+  delay(15000);
 
   pinMode(sip_button, INPUT_PULLUP);
 
