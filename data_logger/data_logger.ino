@@ -22,7 +22,7 @@ volatile uint8_t count = 0;
 
 // MICRO SD
 File myFile;  // Define myfile variable
-String fname = "g_v03.txt";
+String fname = "g_ws2.txt";
 const int chipSelect = 10;
 
 // ACC
